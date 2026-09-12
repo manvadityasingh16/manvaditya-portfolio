@@ -2,6 +2,8 @@
 
 A personal portfolio website showcasing my work as a **Video Editor, Motion Designer, and Visual Storyteller**.
 
+Live Demo - https://manvaditya-portfolio.vercel.app/
+
 ## ✦ About
 
 I'm Manvaditya Singh, a creative editor focused on turning ideas, footage, and stories into engaging visual experiences.
