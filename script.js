@@ -1,11 +1,12 @@
 // =========================================================
 // MARQUEE — duplicate the phrase sequence once so the
 // scroll-left keyframe (-50%) loops with no seam/gap
+// (applies to every .marquee on the page, not just one)
 // =========================================================
 function setupMarquee() {
-  const track = document.querySelector('.marquee');
-  if (!track) return;
-  track.innerHTML = track.innerHTML + track.innerHTML;
+  document.querySelectorAll('.marquee').forEach(track => {
+    track.innerHTML = track.innerHTML + track.innerHTML;
+  });
 }
 setupMarquee();
 
@@ -180,6 +181,82 @@ if ('IntersectionObserver' in window) {
 } else {
   revealEls.forEach(el => el.classList.add('active'));
 }
+
+// =========================================================
+// COUNT-UP STATS — numbers grow from 0 to their target once
+// they scroll into view, keeping any suffix like "+"
+// =========================================================
+function setupCountUp() {
+  const stats = document.querySelectorAll('.about-stats strong');
+  if (!stats.length) return;
+
+  stats.forEach(el => {
+    const raw = el.textContent.trim();
+    const target = parseInt(raw, 10);
+    const suffix = raw.replace(/^[0-9]+/, ''); // e.g. "+"
+    if (isNaN(target)) return;
+    el.dataset.target = target;
+    el.dataset.suffix = suffix;
+    el.textContent = '0' + suffix;
+  });
+
+  const animateCount = (el) => {
+    const target = parseInt(el.dataset.target, 10);
+    const suffix = el.dataset.suffix || '';
+    const duration = 1400;
+    const start = performance.now();
+
+    function tick(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      const value = Math.round(eased * target);
+      el.textContent = value + suffix;
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  };
+
+  if ('IntersectionObserver' in window) {
+    const statObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          animateCount(entry.target);
+          statObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.4 });
+    stats.forEach(el => statObserver.observe(el));
+  } else {
+    stats.forEach(animateCount);
+  }
+}
+setupCountUp();
+
+// =========================================================
+// EXPERIENCE TIMELINE PROGRESS — a vertical line in the
+// empty right-hand column that fills as the section scrolls
+// past, giving the row of rings/pluses some actual motion
+// tied to reading progress instead of just floating alone
+// =========================================================
+function setupExperienceProgress() {
+  const section = document.querySelector('.experience.section');
+  const fill = document.querySelector('.exp-progress-fill');
+  if (!section || !fill) return;
+
+  function update() {
+    const rect = section.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const total = rect.height + vh;
+    const passed = vh - rect.top;
+    const pct = Math.max(0, Math.min(1, passed / total));
+    fill.style.height = (pct * 100) + '%';
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+}
+setupExperienceProgress();
 
 // =========================================================
 // VIDEO MODAL
